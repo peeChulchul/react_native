@@ -11,6 +11,7 @@ import {
   Pressable,
   TouchableOpacity,
   Vibration,
+  Animated,
 } from "react-native";
 import DraggableFlatList, {
   ScaleDecorator,
@@ -47,6 +48,11 @@ export default function App() {
     }
   }
 
+  function deleteToDoHandler(key: string) {
+    const updatedToDos = toDoList.filter((todo) => todo.key !== key);
+    setToDoList(updatedToDos);
+    saveToDos(updatedToDos);
+  }
   async function loadToDos() {
     try {
       const content = await FileSystem.readAsStringAsync(TODO_FILE);
@@ -81,27 +87,51 @@ export default function App() {
         <DraggableFlatList
           data={toDoList}
           onDragEnd={({ data }) => {
-            console.log(data);
-
             setToDoList(data);
             saveToDos(data);
           }}
           keyExtractor={(item) => item.key}
           renderItem={({ item, drag, isActive }) => {
             return (
-              <ScaleDecorator>
-                <Pressable
-                  style={[styles.toDoItem, isActive && styles.activeToDoItem]}
-                  delayLongPress={200}
-                  onLongPress={() => {
-                    Vibration.vibrate(50);
-                    drag();
-                  }}
-                  disabled={isActive}
-                >
-                  <Text style={{ color: "white" }}>{item.toDo}</Text>
-                </Pressable>
-              </ScaleDecorator>
+              <Swipeable
+                key={item.key}
+                rightThreshold={40}
+                enableTrackpadTwoFingerGesture
+                renderRightActions={(progress, dragX, key) => {
+                  const trans = progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [128, 0],
+                    extrapolate: "clamp",
+                  });
+
+                  return (
+                    <Animated.View
+                      style={[
+                        styles.deleteButtonContainer,
+                        { transform: [{ translateX: trans }] },
+                      ]}
+                    >
+                      <Pressable onPress={() => deleteToDoHandler(item.key)}>
+                        <Text>삭제</Text>
+                      </Pressable>
+                    </Animated.View>
+                  );
+                }}
+              >
+                <ScaleDecorator>
+                  <Pressable
+                    style={[styles.toDoItem, isActive && styles.activeToDoItem]}
+                    delayLongPress={200}
+                    onLongPress={() => {
+                      Vibration.vibrate(50);
+                      drag();
+                    }}
+                    disabled={isActive}
+                  >
+                    <Text style={{ color: "white" }}>{item.toDo}</Text>
+                  </Pressable>
+                </ScaleDecorator>
+              </Swipeable>
             );
           }}
         />
@@ -135,6 +165,14 @@ const styles = StyleSheet.create({
   toDosContainer: {
     flex: 1,
   },
+  deleteButtonContainer: {
+    backgroundColor: "red",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    borderRadius: 5,
+  },
+
   toDoItem: {
     marginVertical: 2,
     padding: 8,
