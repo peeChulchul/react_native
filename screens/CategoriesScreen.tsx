@@ -6,7 +6,7 @@ import { RootStackParamList } from "App";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 interface IcategoriesScreen {
-  navigation: NativeStackNavigationProp<RootStackParamList, "MealsCategories">;
+  navigation: NativeStackNavigationProp<RootStackParamList, "MealsOverview">;
 }
 
 export default function CategoriesScreen({ navigation }: IcategoriesScreen) {

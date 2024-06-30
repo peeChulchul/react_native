@@ -11,7 +11,7 @@ import { Meal } from "data/dummy-data";
 import { RootStackParamList } from "App";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import MealDetails from "./MealDetails";
+import MealDetails from "components/MealDetails";
 
 interface ImealItem {
   //   title: Meal["title"];

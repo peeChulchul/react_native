@@ -8,10 +8,14 @@ import MealDetailScreen from "screens/MealDetailScreen";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import FavoriteScreen from "screens/FavoriteScreen";
 import { Ionicons } from "@expo/vector-icons";
+import FavoritesContextProvider from "store/context/favorites-context";
+import { Provider } from "react-redux";
+import { store } from "store/redux/store";
+import { Meal } from "data/dummy-data";
 export type RootStackParamList = {
   Drawer: undefined;
   MealsOverview: { categoryId: string };
-  MealDetail: { mealId: string };
+  MealDetail: { mealId: Meal["id"] };
 };
 
 export type RootDrawerParamList = {
@@ -59,48 +63,52 @@ export default function App() {
   return (
     <>
       <StatusBar barStyle={"light-content"} />
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerStyle: { backgroundColor: "#351401" },
-            headerTintColor: "white",
-            contentStyle: { backgroundColor: "#3f2f25" },
-            // contentStyle: { backgroundColor: "white" },
-          }}
-        >
-          <Stack.Screen
-            // name="MealsCategories"
-            name="Drawer"
-            component={DrawerNavigator}
-            options={{
-              title: "All Categories",
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="MealsOverview"
-            component={MealsOverviewScreens}
-            // options={({ navigation, route }) => {
-            //   const catId = route.params.categoryId;
-            //   return {
-            //     title: catId,
-            //   };
-            // }}
-          />
-          <Stack.Screen
-            name="MealDetail"
-            component={MealDetailScreen}
-            options={{
-              title: "About the Meal",
-            }}
-            // options={{
-            //   headerRight: () => {
-            //     return <Button title="Tap me!" />;
-            //   },
-            // }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <Provider store={store}>
+        <FavoritesContextProvider>
+          <NavigationContainer>
+            <Stack.Navigator
+              screenOptions={{
+                headerStyle: { backgroundColor: "#351401" },
+                headerTintColor: "white",
+                contentStyle: { backgroundColor: "#3f2f25" },
+                // contentStyle: { backgroundColor: "white" },
+              }}
+            >
+              <Stack.Screen
+                // name="MealsCategories"
+                name="Drawer"
+                component={DrawerNavigator}
+                options={{
+                  title: "All Categories",
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="MealsOverview"
+                component={MealsOverviewScreens}
+                // options={({ navigation, route }) => {
+                //   const catId = route.params.categoryId;
+                //   return {
+                //     title: catId,
+                //   };
+                // }}
+              />
+              <Stack.Screen
+                name="MealDetail"
+                component={MealDetailScreen}
+                options={{
+                  title: "About the Meal",
+                }}
+                // options={{
+                //   headerRight: () => {
+                //     return <Button title="Tap me!" />;
+                //   },
+                // }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </FavoritesContextProvider>
+      </Provider>
     </>
   );
 }
