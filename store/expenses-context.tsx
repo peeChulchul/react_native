@@ -1,56 +1,26 @@
 import { createContext, useReducer } from "react";
 import { Iexpenses } from "components/ExpensesOutput/ExpensesOutput";
 
-const DUMMY_EXPENSES = [
-  {
-    id: "e1",
-    description: "A pair of shoes",
-    amount: 59.99,
-    date: new Date("2021-12-19"),
-  },
-  {
-    id: "e2",
-    description: "A pair of trousers",
-    amount: 89.29,
-    date: new Date("2022-01-05"),
-  },
-  {
-    id: "e3",
-    description: "Some bananas",
-    amount: 5.99,
-    date: new Date("2021-12-01"),
-  },
-  {
-    id: "e4",
-    description: "A book",
-    amount: 14.99,
-    date: new Date("2022-02-19"),
-  },
-  {
-    id: "e5",
-    description: "Another book",
-    amount: 18.59,
-    date: new Date("2022-02-18"),
-  },
-];
-
 interface IexpensesContextState {
   expenses: Iexpenses[];
-  addExpense: ({ description, amount, date }: Omit<Iexpenses, "id">) => void;
-  deleteExpense: (id: any) => void;
+  addExpense: (expense: Iexpenses) => void;
+  deleteExpense: (id: string) => void;
+  setExpense: (expenses: Iexpenses[]) => void;
   updateExpense: (
-    id: any,
+    id: string,
     { amount, date, description }: Omit<Iexpenses, "id">
   ) => void;
 }
 
 type ExpensesAction =
-  | { type: "ADD"; payload: Omit<Iexpenses, "id"> }
+  | { type: "ADD"; payload: Iexpenses }
   | { type: "UPDATE"; payload: { id: string; data: Omit<Iexpenses, "id"> } }
-  | { type: "DELETE"; payload: string };
+  | { type: "DELETE"; payload: string }
+  | { type: "SET"; payload: Iexpenses[] };
 
 export const ExpensesContext = createContext<IexpensesContextState>({
   expenses: [],
+  setExpense: () => {},
   addExpense: () => {},
   deleteExpense: () => {},
   updateExpense: () => {},
@@ -61,9 +31,11 @@ function expensesReducer(
   action: ExpensesAction
 ): Iexpenses[] {
   switch (action.type) {
+    case "SET":
+      const inverted = action.payload.reverse();
+      return inverted;
     case "ADD":
-      const id = new Date().toString() + Math.random().toString();
-      return [{ ...action.payload, id }, ...state];
+      return [{ ...action.payload }, ...state];
     case "UPDATE":
       const updateableExpenseIndex = state.findIndex(
         (expense) => expense.id === action.payload.id
@@ -85,9 +57,13 @@ interface IexpensesContextProviderProps {
 }
 
 function ExpensesContextProvider({ children }: IexpensesContextProviderProps) {
-  const [expensesState, dispatch] = useReducer(expensesReducer, DUMMY_EXPENSES);
+  const [expensesState, dispatch] = useReducer(expensesReducer, []);
 
-  function addExpense(expenseData: Omit<Iexpenses, "id">) {
+  function setExpense(expenses: Iexpenses[]) {
+    dispatch({ type: "SET", payload: expenses });
+  }
+
+  function addExpense(expenseData: Iexpenses) {
     dispatch({ type: "ADD", payload: expenseData });
   }
 
@@ -101,6 +77,7 @@ function ExpensesContextProvider({ children }: IexpensesContextProviderProps) {
 
   const value: IexpensesContextState = {
     expenses: expensesState,
+    setExpense,
     addExpense,
     deleteExpense,
     updateExpense,

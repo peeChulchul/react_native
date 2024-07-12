@@ -1,11 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
-import React, { useContext, useLayoutEffect } from "react";
+import React, { useContext, useLayoutEffect, useState } from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "App";
 import IconButton from "components/UI/IconButton";
 import { GlobalStyles } from "constants/style";
 import { ExpensesContext } from "store/expenses-context";
 import ExpenseForm from "components/ManageExpense/ExpenseForm";
+import { deleteExpense, storeExpense, updateExpense } from "util/http";
+import LoadingOverlay from "components/UI/LoadingOverlay";
+import ErrorOverlay from "components/UI/ErrorOverlay";
 
 interface ImanageExpenseProps
   extends NativeStackScreenProps<RootStackParamList, "ManageExpense"> {}
@@ -14,10 +17,16 @@ export default function ManageExpense({
   navigation,
   route,
 }: ImanageExpenseProps) {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
-  const { deleteExpense, updateExpense, addExpense, expenses } =
-    useContext(ExpensesContext);
+  const {
+    deleteExpense: deleteContextExpense,
+    updateExpense: updateContextExpense,
+    addExpense,
+    expenses,
+  } = useContext(ExpensesContext);
 
   const selectedExpense = expenses.find(
     (expense) => expense.id === editedExpenseId
@@ -29,26 +38,55 @@ export default function ManageExpense({
     });
   }, [isEditing, navigation]);
 
-  function deleteExpenseHandler() {
-    deleteExpense(editedExpenseId);
-    navigation.goBack();
+  async function deleteExpenseHandler() {
+    setIsSubmitting(true);
+
+    try {
+      await deleteExpense(editedExpenseId!);
+      deleteContextExpense(editedExpenseId!);
+      navigation.goBack();
+    } catch (error) {
+      setError("Could not delete expense - please try again later");
+      setIsSubmitting(false);
+    }
   }
 
   function cancelHandler() {
     navigation.goBack();
   }
 
-  function confirmHandler(expenseData: {
+  async function confirmHandler(expenseData: {
     amount: number;
     date: Date;
     description: string;
   }) {
-    if (isEditing) {
-      updateExpense(editedExpenseId, expenseData);
-    } else {
-      addExpense(expenseData);
+    setIsSubmitting(true);
+
+    try {
+      if (isEditing) {
+        updateContextExpense(editedExpenseId, expenseData);
+        await updateExpense(editedExpenseId, expenseData);
+      } else {
+        const id = await storeExpense(expenseData);
+        addExpense({ ...expenseData, id });
+      }
+      navigation.goBack();
+    } catch (error) {
+      setError("Could not save data - please try again later!");
+      setIsSubmitting(false);
     }
-    navigation.goBack();
+  }
+
+  function errorHandler() {
+    setError(null);
+  }
+
+  if (error && !isSubmitting) {
+    return <ErrorOverlay message={error} onConfirm={errorHandler} />;
+  }
+
+  if (isSubmitting) {
+    return <LoadingOverlay />;
   }
 
   return (
